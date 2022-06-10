@@ -11,6 +11,7 @@ conexao = Conexao.connection()
 # querys do PostreSQL com a tabela de usuarios
 select_all_user = '''SELECT * FROM usuarios'''
 select_id_user = "SELECT id, nome, email, senha FROM usuarios WHERE id = %s"
+select_email_user = "SELECT id, nome, email, senha FROM usuarios WHERE email = %s"
 insert_query_user = '''INSERT INTO usuarios (nome, email, senha) VALUES (%s, %s, %s)'''
 update_query_user = '''UPDATE usuarios SET nome = %s, email = %s, senha = %s WHERE id = %s'''
 delete_query_user = '''DELETE FROM usuarios WHERE id = %s'''
@@ -43,6 +44,19 @@ def cria_user():
         resp = "usuario nao pode ser criado"
     return resp
 
+@app.route('/users/login', methods=['POST'])
+def valida_user():
+    _json = request.json
+    user = User(None, None, _json["email"], _json["senha"])
+    try:
+        busca_user = busca_email_user(user.email)
+        if user.nome == busca_user.nome:
+            if user.senha == busca_user.senha:
+                return busca_user
+            else: raise Exception
+        else: raise Exception
+    except Exception:
+        print("usuario nao encontrado")
 
 @app.route('/users', methods=['GET'])
 def select_users():
@@ -67,6 +81,15 @@ def busca_id_user(id):
     cursor.execute(select_id_user, record_to_insert)
     record = cursor.fetchone()
     return str(record)
+
+@app.route('/users/name/<name>', methods=['GET'])
+def busca_email_user(email):
+    cursor = conexao.cursor()
+    record_to_insert = str(email)
+    cursor.execute(select_email_user, record_to_insert)
+    record = cursor.fetchone()
+    print(str(record))
+    return record
 
 
 @app.route('/users/<id>', methods=['PUT'])
