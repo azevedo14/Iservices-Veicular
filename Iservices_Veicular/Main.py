@@ -10,18 +10,20 @@ conexao = Conexao.connection()
 
 # querys do PostreSQL com a tabela de usuarios
 select_all_user = '''SELECT * FROM usuarios'''
-select_id_user = "SELECT id, nome, email, senha FROM usuarios WHERE id = %s"
-select_email_user = "SELECT id, nome, email, senha FROM usuarios WHERE email = %s"
+select_id_user\
+    = '''SELECT id, nome, email, senha FROM usuarios WHERE id = %s;'''
+select_name_user = '''SELECT id, nome, email, senha FROM usuarios WHERE name = %s'''
+select_email_user = '''SELECT id, nome, email, senha FROM usuarios WHERE email = %s'''
 insert_query_user = '''INSERT INTO usuarios (nome, email, senha) VALUES (%s, %s, %s)'''
-update_query_user = '''UPDATE usuarios SET nome = %s, email = %s, senha = %s WHERE id = %s'''
-delete_query_user = '''DELETE FROM usuarios WHERE id = %s'''
+update_query_user = '''UPDATE usuarios SET nome = %s, email = %s, senha = %s WHERE id = %s;'''
+delete_query_user = '''DELETE FROM usuarios WHERE id = %s;'''
 
 # querys do PostgreSQL com a tabela de servicos
 select_all_services = '''SELECT * FROM servicos'''
-select_id_service = '''SELECT id, nome, valor FROM servicos WHERE id = %s'''
+select_id_service = '''SELECT id, nome, valor FROM servicos WHERE id = %s;'''
 insert_query_service = '''INSERT INTO servicos (nome, valor) VALUES (%s, %s)'''
-update_query_service = '''UPDATE servicos SET nome = %s, valor = %s WHERE id = %s'''
-delete_query_service = '''DELETE FROM servicos WHERE id = %s'''
+update_query_service = '''UPDATE servicos SET nome = %s, valor = %s WHERE id = %s;'''
+delete_query_service = '''DELETE FROM servicos WHERE id = %s;'''
 
 
 @app.route('/')
@@ -50,9 +52,11 @@ def valida_user():
     user = User(None, None, _json["email"], _json["senha"])
     try:
         busca_user = busca_email_user(user.email)
-        if user.nome == busca_user.nome:
-            if user.senha == busca_user.senha:
-                return busca_user
+        if user.email == busca_user[2]:
+            if user.senha == busca_user[3]:
+                user.id = busca_user[0]
+                user.nome = busca_user[1]
+                return str(user)
             else: raise Exception
         else: raise Exception
     except Exception:
@@ -82,11 +86,22 @@ def busca_id_user(id):
     record = cursor.fetchone()
     return str(record)
 
-@app.route('/users/name/<name>', methods=['GET'])
+@app.route('/users/email/<email>', methods=['GET'])
 def busca_email_user(email):
     cursor = conexao.cursor()
-    record_to_insert = str(email)
-    cursor.execute(select_email_user, record_to_insert)
+    record_to_insert = email
+    teste = "SELECT id, nome, email, senha FROM usuarios WHERE email = '{}'".format(email)
+    cursor.execute(teste)
+    record = cursor.fetchone()
+    print(str(record))
+    return record
+
+@app.route('/users/name/<name>', methods=['GET'])
+def busca_nome_user(name):
+    cursor = conexao.cursor()
+    record_to_insert = name
+    teste = "SELECT id, nome, email, senha FROM usuarios WHERE nome = '{}'".format(name)
+    cursor.execute(teste)
     record = cursor.fetchone()
     print(str(record))
     return record
